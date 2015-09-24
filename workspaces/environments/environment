@@ -1,0 +1,126 @@
+JSE_HOME=""
+for dir in "${ENVIRONMENTS_PATH}" /opt; do
+	for subdir in "/test" "/jse" "/jdk" "/java"; do
+		if [ -d "${dir}${subdir}/jse7" ]; then
+			JSE_HOME="${dir}${subdir}"
+			break 2
+		fi
+	done
+done
+
+JSE6="${JSE_HOME}/jse6"
+JSE7="${JSE_HOME}/jse7"
+JSE8="${JSE_HOME}/jse8"
+
+APPS_PATH="${ENVIRONMENT_PATH}/apps"
+APPS_DATA="${ENVIRONMENT_PATH}/data"
+LOGS_PATH="${APPS_DATA}/logs"
+PID_PATH="${APPS_DATA}/pids"
+
+mkdir -p "${LOGS_PATH}"
+mkdir -p "${PID_PATH}"
+
+JENKINS_PATH="${APPS_PATH}/jenkins"
+JENKINS_HOME="${APPS_DATA}/jenkins"
+JENKINS_PORT="59080"
+JENKINS_PREFIX="/jenkins"
+JENKINS_DESCRIPTION="Jenkins CI Server"
+JENKINS_NAME="jenkins"
+JENKINS_PID_FILENAME="${PID_PATH}/${JENKINS_NAME}.pid"
+JENKINS_LOGS_PATH="${LOGS_PATH}/${JENKINS_NAME}"
+
+HORIZONTAL_LINE="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+mkdir -p "${JENKINS_LOGS_PATH}"
+
+
+printTextInReverse() {
+	tput rev
+	printf '%-62s %s' "$1"
+	tput sgr0
+}
+
+# $1 = Title
+# $2 ... Options
+drawWindow() {
+	drawBoxTop
+	printf '┃'
+	printTextInReverse "$1$#"
+	printf '┃\n'
+	if [ "$2" == "" ]; then
+		drawBoxBottom
+		return
+	fi
+	drawBoxMiddle
+
+	while [ "$2" != "" ]; do
+		if [ "$2" == "---" ]; then
+			printf '┃%s┃\n' "${HORIZONTAL_LINE}"
+		else
+			showOption "$2"
+		fi
+		shift
+	done
+}
+
+drawBoxTop() {
+	printf '┏%s┓\n' "${HORIZONTAL_LINE}"
+}
+
+drawBoxBottom() {
+	printf '┗%s┛\n' "${HORIZONTAL_LINE}"
+}
+
+drawBoxMiddle() {
+	printf '┣%s┫\n' "${HORIZONTAL_LINE}"
+}
+
+
+showTitle() {
+	drawBoxTop
+	printf '┃'
+	tput rev
+	printf '%-62s %s' "$1"
+	tput sgr0
+	printf '┃\n'
+
+	drawBoxMiddle
+}
+
+showOption() {
+	printf '┃ %-61s %s┃\n' "$1"
+}
+
+showJenkinsSettings() {
+	showTitle "JENKINS"
+	echo "* JENKINS_HOME=${JENKINS_HOME}"
+	echo "* JENKINS_PORT=${JENKINS_PORT}"
+	echo "* JENKINS_PREFIX=${JENKINS_PREFIX}"
+	echo "* JENKINS_DESCRIPTION=${JENKINS_DESCRIPTION}"
+	echo "* JENKINS_NAME=${JENKINS_NAME}"
+	echo "* JENKINS_PID_FILENAME=${JENKINS_PID_FILENAME}"
+	echo "* JENKINS_LOGS_PATH=${JENKINS_LOGS_PATH}"
+	printf "\n"
+}
+
+showEnvironmentSettings() {
+	showTitle "ENVIRONMENT SETTINGS"
+	echo "* ENVIRONMENTS_PATH: ${ENVIRONMENTS_PATH}"
+	echo "* ENVIRONMENT_PATH: ${ENVIRONMENT_PATH}"
+	echo "* APPS_PATH: ${APPS_PATH}"
+	echo "* APPS_DATA: ${APPS_DATA}"
+	echo "* LOGS_PATH: ${LOGS_PATH}"
+	echo "* PID_PATH: ${PID_PATH}"
+	echo "* JSE_HOME: ${JSE_HOME}"
+	printf "\n"
+
+	showJenkinsSettings
+
+	showTitle "APPLICATION URL's"
+	echo "* Jenkins: http://${CURRENT_IP}:${JENKINS_PORT}/jenkins"
+	echo "* Nexus:  http://${CURRENT_IP}:${NEXUS_PORT}/nexus"
+	echo "* Sonar:  http://${CURRENT_IP}:${SONAR_PORT}/sonar"
+	printf "\n\n"
+}
+# ulimit -n 3072 
+# ulimit -s 16384

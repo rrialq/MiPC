@@ -1,0 +1,15 @@
+# Find the environment folder
+findEnvironmentFolder() {
+	ENVIRONMENT_PATH=$(cd $(dirname ${BASH_SOURCE:-$0});pwd)
+	while [ "${ENVIRONMENT_PATH}" != "/"  ] && [ ! -f "${ENVIRONMENT_PATH}/environment" ]; do
+		ENVIRONMENT_PATH=$(dirname "${ENVIRONMENT_PATH}")
+	done
+	if [ "${ENVIRONMENT_PATH}" != "/" ]; then
+		ENVIRONMENTS_PATH=$(dirname "${ENVIRONMENT_PATH}")
+	else
+		ENVIRONMENTS_PATH="/"
+	fi
+}
+
+findEnvironmentFolder
+. "${ENVIRONMENTS_PATH}/environment"

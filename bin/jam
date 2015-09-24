@@ -1,0 +1,162 @@
+#!/bin/bash
+
+show_help() {
+    echo ""
+    echo "======================================================================"
+    echo "                           JMA versión ${JMA_VERSION}"
+    echo "======================================================================"
+    echo ""
+    echo "Establece el entorno adecuado para las herramientas Java, Maven y ANT,"
+    echo "Los parámetros no son sensibles a mayúsculas/minúsculas, y salvo los"
+    echo "establecidos para solicitar ayuda o la versión, no comienzan por guiones."
+    echo ""
+    echo "source jma [6|jse6|jdk6] [7|jse7|jdk7] [8|jse8|jdk8] [2|m2|maven2] [3|m3|maven3] [a32] [a64]"
+    echo ""
+    echo "-h, -? o --help: Muestra esta pantalla de ayuda."
+    echo "-v o --version: Muestra la versión del programa."
+    echo ""
+    echo "+ [Parámetros Java]       [Parámetros Maven]     [Parámetros ANT]"
+    echo "  ===================     =====================  ================"
+    echo "  * 6|j6|jse6|jdk6: JSE6  * 2|m2|maven2: MAVEN2  * ant1: ANT1"
+    echo "  * 7|j7|jse7|jdk7: JSE7  * 3|m3|maven3: MAVEN3  * ant2: ANT2"
+    echo "  * 8|j8|jse8|jdk8: JSE8" x 4|m4|maven4: MAVEN4
+    echo ""
+    echo "+ [Parámetros Groovy]"
+    echo "  ==================="
+    echo "  * g1|groovy1: GROOVY1"
+    echo "  * g2|groovy2: GROOVY2"
+    echo ""
+    echo "+ [Arquitectura]"
+    echo "  * a32: 32bits  ===> Las herramientas se configuran para 32bits"
+    echo "  * a64: 64bits  ===> Las herramientas se configuran para 64bits"
+    echo "  * Si no se indica arquitectura, se deriva hacia el link simbólico en /opt"
+}
+
+#$1=jse6/bin
+selectFirstTool() {
+    local tool_path=""
+    if [ "${architecture}" != "" ]; then
+        tool_path=$(selectFirstToolInArchitecture $@)
+    fi
+    if [ "${tool_path}" == "" ]; then
+        tool_path=$(selectFirstToolInDefault $@)
+    fi
+    echo "${tool_path}"
+}
+
+selectFirstToolInArchitecture() {
+    if [ -d "${HOME}/opt/${architecture}$1" ]; then
+        echo "${HOME}/opt/${architecture}$1"
+        return
+    fi
+
+    if [ -d "/opt/${architecture}$1" ]; then
+        echo "/opt/${architecture}$1"
+        return
+    fi
+    echo ""
+}
+
+selectFirstToolInDefault() {
+    if [ -d "${HOME}/opt/$1" ]; then
+        echo "${HOME}/opt/$1"
+        return
+    fi
+
+    if [ -d "/opt/$1" ]; then
+        echo "/opt/$1"
+        return
+    fi
+    echo ""
+}
+
+#$1 = REGEXP $2 = NEW_VALUE
+replaceInPATH() {
+    if [[ $PATH =~ $1 ]]; then
+        eliminar="${BASH_REMATCH[0]}"
+        export PATH=${PATH//$eliminar/}
+    fi
+    if [ "${2}" != "" ]; then
+        export PATH="${2}:${PATH}"
+    fi
+}
+
+
+JMA_VERSION="1.0.0"
+TOOLS_PATH="/opt"
+
+architecture=""
+#   (.*\/jse[^:]*:?)
+
+JAVA_PATTERN="([^:]*\/jse[^:]*:?)"
+MAVEN_PATTERN="([^:]*\/maven[^:]*:?)"
+ANT_PATTERN="([^:]*\/ant[^:]*:?)"
+GROOVY_PATTERN="([^:]*\/groovy[^:]*:?)"
+
+
+while test $# -gt 0; do
+    option="${1,,}"
+    case "${option}" in
+    "6" | "7" | "8" | "j6" | "j7" | "j8" | "jse6" | "jse7" | "jse8" | "jdk6" | "jdk7" | "jdk8" | "java6" | "java7" | "java8")
+        java_version="jse${1: -1}"
+        java_home=$(selectFirstTool "${java_version}")
+        if [ "${java_home}" != "" ]; then
+            export JAVA_HOME="${java_home}"
+            replaceInPATH "${JAVA_PATTERN}" "${java_home}/bin"
+        fi;;
+
+    "2" | "3" | "4" | "m2" | "m3" | "m4" | "maven2" | "maven3" | "maven4")
+        maven_version="maven${1: -1}"
+        maven_home=$(selectFirstTool "${maven_version}")
+        if [ "${maven_home}" != "" ]; then
+            export M2_HOME="${maven_home}"
+            replaceInPATH "${MAVEN_PATTERN}" "${maven_home}/bin"
+        fi;;
+
+    "ant1" | "ant2")
+        ant_version="ant${1: -1}"
+        ant_home=$(selectFirstTool "${ant_version}")
+        if [ "${ant_home}" != "" ]; then
+            export ANT_HOME="${ant_home}"
+            replaceInPATH "${ANT_PATTERN}" "${ant_home}/bin"
+        fi;;
+
+    "g1" | "groovy1" | "g2" | "groovy2")
+        groovy_version="groovy${1: -1}"
+        groovy_home=$(selectFirstTool "${groovy_version}")
+        if [ "${groovy_home}" != "" ]; then
+            export GROOVY_HOME="${groovy_home}"
+            replaceInPATH "${GROOVY_PATTERN}" "${groovy_home}/bin"
+        fi;;
+
+    "a32" | "a64")
+        architecture="tools${1: -2}/";;
+
+    "-v" | "--version")
+        echo "jma ${JMA_VERSION}"
+        return 0;;
+
+    "-c" | "--clear" | "--reset" | "-r")
+        replaceInPATH "${JAVA_PATTERN}" ""
+        replaceInPATH "${MAVEN_PATTERN}" ""
+        replaceInPATH "${GROOVY_PATTERN}" ""
+        replaceInPATH "${ANT_PATTERN}" "";;
+
+    "-h" | "-?" | "--help")
+        show_help
+        return 0;;
+
+    *)
+        echo "PARÁMETRO INCORRECTO: ${1}"
+        return;;
+    esac
+    shift
+done
+
+echo ""
+echo "ENTORNO ESTABLECIDO EN:"
+echo "* ARCHITECTURE: ${architecture}"
+echo "* JAVA_HOME: ${JAVA_HOME} "
+echo "* M2_HOME: ${M2_HOME}"
+echo "* ANT_HOME: ${ANT_HOME}"
+echo "* PATH: ${PATH}"
