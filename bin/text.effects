@@ -1,0 +1,176 @@
+#From http://top-scripts.blogspot.com.es/2011/01/power-of-echo-command-bash-console.html
+   ESC(){ echo -en "\033";}                            # escape character
+ CLEAR(){ echo -en "\033c";}                           # the same as 'tput clear'
+ CIVIS(){ echo -en "\033[?25l";}                       # the same as 'tput civis'
+ CNORM(){ echo -en "\033[?12l\033[?25h";}              # the same as 'tput cnorm'
+  TPUT(){ echo -en "\033[${1};${2}H";}                 # the same as 'tput cup'
+COLPUT(){ echo -en "\033[${1}G";}                      # put text in the same line as the specified column
+  MARK(){ echo -en "\033[7m";}                         # the same as 'tput smso'
+UNMARK(){ echo -en "\033[27m";}                        # the same as 'tput rmso'
+  DRAW(){ echo -en "\033%@";echo -en "\033(0";}        # switch to 'garbage' mode
+ WRITE(){ echo -en "\033(B";}                          # return to normal mode from 'garbage' on the screen
+
+#Text effects
+RESET_ALL="\e[39;49;0m"
+
+EFFECTS_OFF='\e[0m'
+
+BOLD_ON="\e[1m"
+BOLD_OFF="\e[21m"
+HIDDEN_ON="\e[8m"
+HIDDEN_OFF="\e[28m"
+BLINK_ON="\e[5m"
+BLINK_OFF="\e[25m"
+UNDERLINE_ON="\e[4m"
+UNDERLINE_OFF="\e[24m"
+DIM_ON="\e[2m"
+DIM_OFF="\e[22m"
+REVERSE_ON="\e[7m"
+REVERSE_OFF="\e[27m"
+
+RESET_COLOR="\e[39m"
+COLOR_BLACK="\e[30m"
+COLOR_RED="\e[31m"
+COLOR_GREEN="\e[32m"
+COLOR_YELLOW="\e[33m"
+COLOR_BLUE="\e[34m"
+COLOR_MAGENTA="\e[35m"
+COLOR_CYAN="\e[36m"
+COLOR_LIGHT_GRAY="\e[37m"
+COLOR_DARK_GRAY="\e[90m"
+COLOR_LIGHT_RED="\e[91m"
+COLOR_LIGHT_GREEN="\e[92m"
+COLOR_LIGHT_YELLOW="\e[93m"
+COLOR_LIGHT_BLUE="\e[94m"
+COLOR_LIGHT_MAGENTA="\e[95m"
+COLOR_LIGHT_CYAN="\e[96m"
+COLOR_WHITE="\e[97m"
+
+divider='\u250'
+
+L() {
+    l=`builtin printf %${2:-$COLUMNS}s` && printf "${l// /${1:-=}}"
+}
+
+drawbox2() {
+    local cols=$(( $4 - $2 - 2))
+    local rowStart=$(( $1 + 1 ))
+    local rowEnd=$(( $3 + 1 ))
+
+    moveto $1 $2
+    saveCursor
+    DRAW
+    printf "l"
+    L "q" $cols
+    printf "k"
+    restoreCursor
+    WRITE
+}
+
+drawbox() {
+    local cols=$(( $4 - $2 - 2))
+    local rowStart=$(( $1 + 1 ))
+    local rowEnd=$(( $3 + 1 ))
+
+    moveto $1 $2
+    saveCursor
+    DRAW
+    printf "l"
+    L "q" $cols
+    printf "k"
+    restoreCursor 1
+
+    for (( i=$rowStart; i<$3; i++ )); do
+        printf "x"
+        L " " $cols
+        printf "x"
+        restoreCursor 1
+    done
+    printf "m"
+    L "q" $cols
+    printf "j"
+
+    if [ "$5" != "" ]; then
+        moveto $rowStart $2
+        saveCursor
+        printf "x "
+        WRITE
+        printf "$5"
+        restoreCursor
+        DRAW
+        printf "t"
+        L "q" $cols
+        printf "u"
+        moveto $((rowStart + 2 )) $(( $2 + 1 ))
+    else
+        moveto $rowStart $(( $2 + 1 ))
+    fi
+    WRITE
+    saveCursor
+}
+
+saveCursor() {
+    tput sc
+}
+
+restoreCursor() {
+    tput rc
+    cursorDown $1
+    saveCursor
+}
+
+moveto() {
+    tput cup $1 ${2:-1}
+}
+
+printat() {
+    echo -ne "\e[${1};${2}H""$3"
+}
+
+cursorDown() {
+    tput cud ${1:-1}
+}
+
+cursorToBOL() {
+    tput cub `tput `
+}
+#
+# $1=Row start
+# $2=Col start
+# $3=EFFECTS
+#
+print_foreground_color_demo() {
+    local rowEnd
+    local colEnd
+    rowEnd=$(( $1 + 11 ))
+    colEnd=$(( $2 + 59 ))
+
+    drawbox $1 $2 $rowEnd $colEnd "${BOLD_ON}${COLOR_YELLOW}FOREGROUND COLOR DEMO${BOLD_OFF}${RESET_COLOR}${3}"
+
+    printf "${COLOR_BLACK}This is black color    ${COLOR_WHITE}This is white color"
+    restoreCursor
+    printf "${COLOR_RED}This is red color      ${COLOR_LIGHT_RED}This is light red color"
+    restoreCursor
+    printf "${COLOR_GREEN}This is green color    ${COLOR_LIGHT_GREEN}This is light green color"
+    restoreCursor
+    printf "${COLOR_YELLOW}This is yellow color   ${COLOR_LIGHT_YELLOW}This is light yellow color"
+    restoreCursor
+    printf "${COLOR_BLUE}This is blue color     ${COLOR_LIGHT_BLUE}This is light blue color"
+    restoreCursor
+    printf "${COLOR_MAGENTA}This is magenta color  ${COLOR_LIGHT_MAGENTA}This is light magenta color"
+    restoreCursor
+    printf "${COLOR_CYAN}This is cyan color     ${COLOR_LIGHT_CYAN}This is light cyan color"
+    restoreCursor
+    printf "${COLOR_LIGHT_GRAY}This is gray color     ${COLOR_DARK_GRAY}This is dark gray color${RESET_COLOR}"
+
+    printf "\n\n\n"
+}
+
+foreground_color_demo() {
+    print_foreground_color_demo 5 0 ""
+    print_foreground_color_demo 5 65 "${BOLD_ON}"
+    #clear
+
+    #drawbox2 5 0 16 60 "Hola"
+
+}
