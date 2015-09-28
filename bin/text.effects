@@ -95,7 +95,7 @@ drawbox() {
         saveCursor
         printf "x "
         WRITE
-        printf "${5}${BOLD_OFF}${RESET_COLOR}"
+        printf "${5}"
         restoreCursor
         DRAW
         printf "t"
@@ -145,7 +145,8 @@ print_foreground_color_demo() {
     rowEnd=$(( $1 + 11 ))
     colEnd=$(( $2 + 59 ))
 
-    drawbox $1 $2 $rowEnd $colEnd "${BOLD_ON}${COLOR_YELLOW}FOREGROUND COLOR DEMO${BOLD_OFF}${RESET_COLOR}${3}"
+    drawbox $1 $2 $rowEnd $colEnd "${BOLD_ON}${COLOR_YELLOW}FOREGROUND COLOR DEMO${BOLD_OFF}${RESET_COLOR}"
+    printf "${3}"
 
     printf "${COLOR_BLACK}This is black color    ${COLOR_WHITE}This is white color"
     restoreCursor
