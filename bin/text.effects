@@ -95,7 +95,7 @@ drawbox() {
         saveCursor
         printf "x "
         WRITE
-        printf "$5"
+        printf "${5}${BOLD_OFF}${RESET_COLOR}"
         restoreCursor
         DRAW
         printf "t"
